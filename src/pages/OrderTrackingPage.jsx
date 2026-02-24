@@ -1,29 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import OrderStatus from '../components/OrderStatus';
 
 const API_URL = '/api';
+
+const STATUS_FLOW = ['Order Received', 'Preparing', 'Out for Delivery', 'Delivered'];
 
 function OrderTrackingPage() {
     const { id } = useParams();
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [statusIndex, setStatusIndex] = useState(0);
 
+    // Fetch the order once
     useEffect(() => {
-        let interval;
-
         const fetchOrder = async () => {
             try {
                 const res = await fetch(`${API_URL}/orders/${id}`);
                 if (!res.ok) throw new Error('Order not found');
                 const data = await res.json();
                 setOrder(data);
+                setStatusIndex(data.statusIndex || 0);
                 setLoading(false);
-
-                if (data.status === 'Delivered') {
-                    clearInterval(interval);
-                }
             } catch (err) {
                 setError(err.message);
                 setLoading(false);
@@ -31,9 +30,27 @@ function OrderTrackingPage() {
         };
 
         fetchOrder();
-        interval = setInterval(fetchOrder, 3000);
-        return () => clearInterval(interval);
     }, [id]);
+
+    // Simulate status progression on the client side for reliable demo
+    useEffect(() => {
+        if (!order || statusIndex >= STATUS_FLOW.length - 1) return;
+
+        const delay = 5000 + Math.random() * 5000; // 5-10 seconds per step
+        const timer = setTimeout(() => {
+            setStatusIndex(prev => {
+                const next = prev + 1;
+                setOrder(o => ({
+                    ...o,
+                    status: STATUS_FLOW[next],
+                    statusIndex: next,
+                }));
+                return next;
+            });
+        }, delay);
+
+        return () => clearTimeout(timer);
+    }, [order, statusIndex]);
 
     if (loading) {
         return (
@@ -63,7 +80,7 @@ function OrderTrackingPage() {
         <div className="page fade-in" style={{ paddingTop: '2rem' }}>
             <div className="tracking-container">
                 <div className="tracking-card">
-                    {order.status === 'Delivered' && (
+                    {statusIndex >= STATUS_FLOW.length - 1 && (
                         <div className="success-animation">
                             <div className="success-checkmark">✓</div>
                         </div>
@@ -71,10 +88,10 @@ function OrderTrackingPage() {
 
                     <div className="tracking-order-id">Order #{id.slice(0, 8)}</div>
                     <h2 className="tracking-title">
-                        {order.status === 'Delivered' ? '🎉 Order Delivered!' : '🔥 Tracking Your Order'}
+                        {statusIndex >= STATUS_FLOW.length - 1 ? '🎉 Order Delivered!' : '🔥 Tracking Your Order'}
                     </h2>
 
-                    <OrderStatus currentStatus={order.status} statusIndex={order.statusIndex} />
+                    <OrderStatus currentStatus={STATUS_FLOW[statusIndex]} statusIndex={statusIndex} />
 
                     <div className="tracking-details">
                         <h4>📋 Order Details</h4>
