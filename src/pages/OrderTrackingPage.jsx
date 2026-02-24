@@ -1,23 +1,28 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import OrderStatus from '../components/OrderStatus';
-
-const API_URL = '/api';
 
 const STATUS_FLOW = ['Order Received', 'Preparing', 'Out for Delivery', 'Delivered'];
 
 function OrderTrackingPage() {
     const { id } = useParams();
-    const [order, setOrder] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [statusIndex, setStatusIndex] = useState(0);
+    const location = useLocation();
 
-    // Fetch the order once
+    // Get order from navigation state (passed from CheckoutPage)
+    const passedOrder = location.state?.order || null;
+
+    const [order, setOrder] = useState(passedOrder);
+    const [loading, setLoading] = useState(!passedOrder);
+    const [error, setError] = useState(null);
+    const [statusIndex, setStatusIndex] = useState(passedOrder?.statusIndex || 0);
+
+    // If no order was passed via state, try fetching from API (works locally, may fail on Vercel)
     useEffect(() => {
+        if (order) return;
+
         const fetchOrder = async () => {
             try {
-                const res = await fetch(`${API_URL}/orders/${id}`);
+                const res = await fetch(`/api/orders/${id}`);
                 if (!res.ok) throw new Error('Order not found');
                 const data = await res.json();
                 setOrder(data);
@@ -30,13 +35,13 @@ function OrderTrackingPage() {
         };
 
         fetchOrder();
-    }, [id]);
+    }, [id, order]);
 
-    // Simulate status progression on the client side for reliable demo
+    // Simulate status progression client-side
     useEffect(() => {
         if (!order || statusIndex >= STATUS_FLOW.length - 1) return;
 
-        const delay = 5000 + Math.random() * 5000; // 5-10 seconds per step
+        const delay = 5000 + Math.random() * 5000;
         const timer = setTimeout(() => {
             setStatusIndex(prev => {
                 const next = prev + 1;
@@ -63,7 +68,7 @@ function OrderTrackingPage() {
         );
     }
 
-    if (error) {
+    if (error || !order) {
         return (
             <div className="page" style={{ paddingTop: '2rem' }}>
                 <div className="empty-state fade-in">

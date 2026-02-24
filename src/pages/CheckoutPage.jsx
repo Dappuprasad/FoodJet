@@ -53,7 +53,7 @@ function CheckoutPage() {
 
             const order = await res.json();
             clearCart();
-            navigate(`/track/${order.id}`);
+            navigate(`/track/${order.id}`, { state: { order } });
         } catch (err) {
             alert('Network error. Please try again.');
             setSubmitting(false);
