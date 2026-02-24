@@ -9,8 +9,8 @@ function Navbar() {
         <nav className="navbar">
             <div className="navbar-inner">
                 <Link to="/" className="navbar-brand">
-                    <span className="logo-icon">🚀</span>
-                    <span>FoodJet</span>
+                    <span className="logo-icon">🍛</span>
+                    <span className="brand-text">FoodJet</span>
                 </Link>
                 <div className="navbar-links">
                     <Link
@@ -22,7 +22,7 @@ function Navbar() {
                     </Link>
                     <Link
                         to="/cart"
-                        className={`nav-link ${location.pathname === '/cart' ? 'active' : ''}`}
+                        className={`nav-link ${location.pathname === '/cart' || location.pathname === '/checkout' ? 'active' : ''}`}
                     >
                         <span className="icon">🛒</span>
                         <span>Cart</span>

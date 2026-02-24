@@ -45,7 +45,7 @@ describe('CheckoutPage', () => {
 
     it('renders delivery form when cart has items', () => {
         render(<CheckoutWithItems items={[...mockItems]} />);
-        expect(screen.getByText('Delivery Details')).toBeInTheDocument();
+        expect(screen.getByText(/Delivery Details/)).toBeInTheDocument();
         expect(screen.getByLabelText(/Full Name/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Delivery Address/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Phone Number/i)).toBeInTheDocument();

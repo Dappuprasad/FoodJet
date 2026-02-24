@@ -7,7 +7,7 @@ function CartPage() {
 
     if (items.length === 0) {
         return (
-            <div className="page">
+            <div className="page" style={{ paddingTop: '2rem' }}>
                 <div className="empty-state fade-in">
                     <div className="empty-icon">🛒</div>
                     <h3>Your cart is empty</h3>
@@ -25,10 +25,10 @@ function CartPage() {
     const grandTotal = totalPrice + deliveryFee + taxes;
 
     return (
-        <div className="page fade-in">
+        <div className="page fade-in" style={{ paddingTop: '2rem' }}>
             <div className="page-header">
                 <h1 className="page-title">🛒 Your Cart</h1>
-                <p className="page-subtitle">{totalItems} item{totalItems > 1 ? 's' : ''} in your cart</p>
+                <p className="page-subtitle">{totalItems} item{totalItems > 1 ? 's' : ''} ready for checkout</p>
             </div>
 
             <div className="cart-layout">
@@ -41,19 +41,21 @@ function CartPage() {
                 <div className="cart-summary">
                     <h3 className="cart-summary-title">Order Summary</h3>
                     <div className="cart-summary-row">
-                        <span className="label">Subtotal</span>
+                        <span className="label">Subtotal ({totalItems} items)</span>
                         <span>₹{totalPrice}</span>
                     </div>
                     <div className="cart-summary-row">
                         <span className="label">Delivery Fee</span>
-                        <span>{deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}</span>
+                        <span style={deliveryFee === 0 ? { color: 'var(--success)', fontWeight: 700 } : {}}>
+                            {deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}
+                        </span>
                     </div>
                     <div className="cart-summary-row">
                         <span className="label">Taxes (5%)</span>
                         <span>₹{taxes}</span>
                     </div>
                     {deliveryFee === 0 && (
-                        <div className="cart-summary-row" style={{ color: 'var(--success)', fontSize: '0.8rem' }}>
+                        <div className="cart-summary-row" style={{ color: 'var(--success)', fontSize: '0.78rem', fontWeight: 600 }}>
                             <span>🎉 Free delivery on orders above ₹500!</span>
                         </div>
                     )}

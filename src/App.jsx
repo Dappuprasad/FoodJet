@@ -6,6 +6,16 @@ import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
 
+function Particles() {
+  return (
+    <div className="particles">
+      <div className="particle"></div>
+      <div className="particle"></div>
+      <div className="particle"></div>
+    </div>
+  );
+}
+
 function Toast() {
   const { toast } = useCart();
   if (!toast) return null;
@@ -15,6 +25,7 @@ function Toast() {
 function AppContent() {
   return (
     <>
+      <Particles />
       <Navbar />
       <Toast />
       <Routes>

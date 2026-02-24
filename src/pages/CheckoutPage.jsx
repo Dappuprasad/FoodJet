@@ -62,7 +62,7 @@ function CheckoutPage() {
 
     if (items.length === 0) {
         return (
-            <div className="page">
+            <div className="page" style={{ paddingTop: '2rem' }}>
                 <div className="empty-state fade-in">
                     <div className="empty-icon">🛒</div>
                     <h3>No items in cart</h3>
@@ -74,22 +74,22 @@ function CheckoutPage() {
     }
 
     return (
-        <div className="page fade-in">
+        <div className="page fade-in" style={{ paddingTop: '2rem' }}>
             <div className="page-header">
                 <h1 className="page-title">📦 Checkout</h1>
-                <p className="page-subtitle">Enter your delivery details</p>
+                <p className="page-subtitle">Almost there — enter your delivery details</p>
             </div>
 
             <div className="checkout-layout">
                 <form className="checkout-form" onSubmit={handleSubmit}>
-                    <h3 className="form-title">Delivery Details</h3>
+                    <h3 className="form-title">📍 Delivery Details</h3>
 
                     <div className="form-group">
                         <label htmlFor="name">Full Name</label>
                         <input
                             id="name"
                             type="text"
-                            placeholder="Enter your full name"
+                            placeholder="e.g. Rahul Sharma"
                             value={form.name}
                             onChange={(e) => setForm({ ...form, name: e.target.value })}
                             className={errors.name ? 'error' : ''}
@@ -101,7 +101,7 @@ function CheckoutPage() {
                         <label htmlFor="address">Delivery Address</label>
                         <textarea
                             id="address"
-                            placeholder="Enter your complete delivery address"
+                            placeholder="e.g. 42, MG Road, Koramangala, Bangalore"
                             value={form.address}
                             onChange={(e) => setForm({ ...form, address: e.target.value })}
                             className={errors.address ? 'error' : ''}
@@ -114,7 +114,7 @@ function CheckoutPage() {
                         <input
                             id="phone"
                             type="tel"
-                            placeholder="10-digit phone number"
+                            placeholder="10-digit mobile number"
                             value={form.phone}
                             onChange={(e) => setForm({ ...form, phone: e.target.value })}
                             className={errors.phone ? 'error' : ''}
@@ -139,7 +139,7 @@ function CheckoutPage() {
                 </form>
 
                 <div className="order-summary">
-                    <h3 className="order-summary-title">Your Order</h3>
+                    <h3 className="order-summary-title">Your Order ({items.length} items)</h3>
                     {items.map(item => (
                         <div key={item.id} className="order-summary-item">
                             <div>

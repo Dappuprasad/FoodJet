@@ -1,25 +1,22 @@
-function OrderStatus({ currentStatus, statusIndex }) {
-    const statuses = [
-        { label: 'Order Received', icon: '📋', key: 'received' },
-        { label: 'Preparing', icon: '👨‍🍳', key: 'preparing' },
-        { label: 'Out for Delivery', icon: '🏍️', key: 'delivery' },
-        { label: 'Delivered', icon: '✅', key: 'delivered' },
-    ];
+const STEPS = [
+    { label: 'Order Received', icon: '📋' },
+    { label: 'Preparing', icon: '👨‍🍳' },
+    { label: 'Out for Delivery', icon: '🏍️' },
+    { label: 'Delivered', icon: '✅' },
+];
 
+function OrderStatus({ statusIndex }) {
     return (
         <div className="status-stepper">
-            {statuses.map((status, index) => {
-                let stepClass = 'status-step';
-                if (index < statusIndex) stepClass += ' completed';
-                else if (index === statusIndex) stepClass += ' active';
-
-                return (
-                    <div key={status.key} className={stepClass}>
-                        <div className="status-icon">{status.icon}</div>
-                        <span className="status-label">{status.label}</span>
-                    </div>
-                );
-            })}
+            {STEPS.map((step, i) => (
+                <div
+                    key={step.label}
+                    className={`status-step ${i < statusIndex ? 'completed' : ''} ${i === statusIndex ? 'active' : ''}`}
+                >
+                    <div className="status-icon">{step.icon}</div>
+                    <span className="status-label">{step.label}</span>
+                </div>
+            ))}
         </div>
     );
 }

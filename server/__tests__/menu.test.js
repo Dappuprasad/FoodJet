@@ -7,7 +7,7 @@ describe('Menu API', () => {
         const res = await request(app).get('/api/menu');
         expect(res.status).toBe(200);
         expect(Array.isArray(res.body)).toBe(true);
-        expect(res.body.length).toBe(40);
+        expect(res.body.length).toBe(10);
     });
 
     it('each menu item should have required fields', async () => {

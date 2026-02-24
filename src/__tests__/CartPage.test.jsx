@@ -65,6 +65,6 @@ describe('CartPage', () => {
 
     it('shows correct item count in header', () => {
         render(<CartPageWithItems items={[...mockItems]} />);
-        expect(screen.getByText(/3 items in your cart/)).toBeInTheDocument();
+        expect(screen.getByText(/3 item(s)? ready for checkout/)).toBeInTheDocument();
     });
 });
