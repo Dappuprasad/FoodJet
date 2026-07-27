@@ -1,0 +1,44 @@
+# Render blueprint for the API. The web client deploys separately to Vercel
+# (see vercel.json) and the database is Supabase Postgres.
+#
+# The API runs as a long-lived Node service rather than a serverless function
+# because it holds WebSocket connections for live order tracking.
+services:
+  - type: web
+    name: foodjet-api
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: .
+    buildCommand: npm ci && npm run build -w @foodjet/shared && npm run build -w @foodjet/api
+    # Migrations run on boot so a deploy can never serve a schema it does not have.
+    startCommand: npm run start:prod -w @foodjet/api
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: '22'
+      # Supabase transaction pooler (port 6543), with
+      # ?pgbouncer=true&connection_limit=1 appended.
+      - key: DATABASE_URL
+        sync: false
+      # Supabase session pooler (port 5432) — migrations need session mode,
+      # and the IPv6-only direct host is unreachable from Render.
+      - key: DIRECT_DATABASE_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: REFRESH_TOKEN_TTL_DAYS
+        value: '30'
+      # Must list the exact Vercel origin: credentialed CORS forbids a wildcard.
+      - key: CORS_ORIGINS
+        sync: false
+      - key: ORDER_SIMULATION_SPEEDUP
+        value: '40'
+      - key: SWAGGER_ENABLED
+        value: 'true'
