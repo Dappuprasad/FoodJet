@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  RECEIVED
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id           String         @id @default(uuid()) @db.Uuid
+  email        String         @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         UserRole       @default(CUSTOMER)
+  orders       Order[]
+  refreshTokens RefreshToken[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@map("users")
+}
+
+/// Refresh tokens are stored hashed and rotated on every use. Holding the hash
+/// rather than the token means a database leak does not hand out live sessions.
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  tokenHash String    @unique
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model MenuItem {
+  id                 String      @id @default(uuid()) @db.Uuid
+  slug               String      @unique
+  name               String
+  description        String
+  /// Money is stored as an integer in paise. Never a float.
+  pricePaise         Int
+  imageUrl           String
+  category           String
+  isVegetarian       Boolean     @default(false)
+  /// 0-3 chillies.
+  spiceLevel         Int         @default(0)
+  preparationMinutes Int         @default(20)
+  rating             Float       @default(4.5)
+  ratingCount        Int         @default(0)
+  isAvailable        Boolean     @default(true)
+  orderItems         OrderItem[]
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@index([category])
+  @@index([isAvailable])
+  @@map("menu_items")
+}
+
+model Order {
+  id                  String             @id @default(uuid()) @db.Uuid
+  /// Short, human-quotable reference such as "FJ-7QK4M2".
+  reference           String             @unique
+  /// Null for guest checkout — an account is not required to order.
+  userId              String?            @db.Uuid
+  user                User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  status              OrderStatus        @default(RECEIVED)
+  customerName        String
+  phone               String
+  addressLine         String
+  deliveryNotes       String?
+  subtotalPaise       Int
+  deliveryFeePaise    Int
+  taxPaise            Int
+  totalPaise          Int
+  estimatedDeliveryAt DateTime
+  items               OrderItem[]
+  timeline            OrderStatusEvent[]
+  placedAt            DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([userId, placedAt(sort: Desc)])
+  @@index([status])
+  @@map("orders")
+}
+
+/// Name, image and unit price are copied onto the line at checkout so that a
+/// later price change or menu deletion cannot rewrite somebody's receipt.
+model OrderItem {
+  id             String    @id @default(uuid()) @db.Uuid
+  orderId        String    @db.Uuid
+  order          Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId     String?   @db.Uuid
+  menuItem       MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  name           String
+  imageUrl       String
+  unitPricePaise Int
+  quantity       Int
+  lineTotalPaise Int
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model OrderStatusEvent {
+  id         String      @id @default(uuid()) @db.Uuid
+  orderId    String      @db.Uuid
+  order      Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status     OrderStatus
+  note       String?
+  occurredAt DateTime    @default(now())
+
+  @@index([orderId, occurredAt])
+  @@map("order_status_events")
+}
