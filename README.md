@@ -231,13 +231,22 @@ cannot see an order the same caller could not have fetched over HTTP.
 
 ```bash
 npm test           # unit tests across all workspaces
-npm run test:e2e   # API integration tests (needs a database)
 npm run lint
 npm run typecheck
 ```
 
-The e2e suite truncates every table, so point `DATABASE_URL` at a disposable
-database when running it — it refuses to run without one being set explicitly.
+The e2e suite needs a database, and it **truncates every table** between runs.
+It therefore refuses to touch `DATABASE_URL` at all and requires a separate,
+disposable one:
+
+```bash
+E2E_DATABASE_URL="postgresql://..." npm run test:e2e -w @foodjet/api
+```
+
+A second free Supabase project works well for this. The run aborts with an
+explanation if `E2E_DATABASE_URL` is missing, or if it matches `DATABASE_URL` —
+the failure mode being guarded against is a developer with a working `.env`
+running the suite and wiping the database the deployed app is serving.
 
 ## Deployment
 
