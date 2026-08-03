@@ -4,11 +4,12 @@ import {
   MessageBody,
   type OnGatewayConnection,
   type OnGatewayDisconnect,
+  type OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import type { Server, Socket } from 'socket.io';
+import type { Namespace, Server, Socket } from 'socket.io';
 import {
   ORDERS_NAMESPACE,
   SOCKET_EVENTS,
@@ -28,6 +29,12 @@ interface SocketData {
 
 type OrdersServer = Server<ClientToServerEvents, ServerToClientEvents, never, SocketData>;
 type OrdersSocket = Socket<ClientToServerEvents, ServerToClientEvents, never, SocketData>;
+type OrdersNamespace = Namespace<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  never,
+  SocketData
+>;
 
 const allowedOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
   .split(',')
@@ -46,7 +53,7 @@ const allowedOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
   cors: { origin: allowedOrigins, credentials: true },
 })
 export class OrdersGateway
-  implements OnModuleInit, OnGatewayConnection, OnGatewayDisconnect
+  implements OnModuleInit, OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   private readonly logger = new Logger(OrdersGateway.name);
 
@@ -73,15 +80,33 @@ export class OrdersGateway
   }
 
   /**
-   * Resolves the caller once, at handshake time, from the same bearer token the
-   * REST API uses. Without this a signed-in customer could not watch their own
-   * order: the ownership check below would see an anonymous socket and refuse.
+   * Resolves the caller from the same bearer token the REST API uses.
+   *
+   * This has to be namespace middleware rather than `handleConnection`.
+   * Socket.IO awaits middleware before the connection is established and before
+   * any message is dispatched; it does not await `handleConnection`. Since
+   * resolving a token involves a database lookup, doing it there raced against
+   * clients that subscribe immediately on `connect` — the subscribe handler
+   * would see an anonymous socket and refuse the user access to their own order.
    */
-  async handleConnection(client: OrdersSocket): Promise<void> {
-    const raw = client.handshake.auth?.token as string | undefined;
-    const token = raw?.startsWith('Bearer ') ? raw.slice(7) : raw;
+  afterInit(server: OrdersNamespace): void {
+    server.use((socket, next) => {
+      const raw = socket.handshake.auth?.token as string | undefined;
+      const token = raw?.startsWith('Bearer ') ? raw.slice(7) : raw;
 
-    client.data.user = await this.auth.verifyAccessToken(token);
+      void this.auth
+        .verifyAccessToken(token)
+        .then((user) => {
+          socket.data.user = user;
+          next();
+        })
+        // A bad or expired token connects anonymously rather than being
+        // rejected, so guest tracking links keep working.
+        .catch(() => next());
+    });
+  }
+
+  handleConnection(client: OrdersSocket): void {
     this.logger.debug(
       `Socket connected: ${client.id}${client.data.user ? ` (${client.data.user.email})` : ''}`,
     );
