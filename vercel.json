@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build -w @foodjet/shared && npm run build -w @foodjet/web",
   "outputDirectory": "apps/web/dist",
-  "installCommand": "npm ci",
+  "installCommand": "npm ci --include=dev",
   "framework": "vite",
   "rewrites": [{ "source": "/((?!assets/|images/|.*\\.).*)", "destination": "/index.html" }],
   "headers": [
