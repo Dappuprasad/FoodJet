@@ -68,6 +68,14 @@ replayed token revokes the whole session rather than silently working twice.
 are readable by anyone holding the order id, which is what makes a tracking link
 work; orders attached to an account are restricted to their owner and to admins.
 
+**The database has exactly one door.** Supabase publishes every table in the
+`public` schema through its Data API, where the anon key plus Row-Level Security
+is all that stands between the internet and your rows. This app never uses that
+path — it connects to Postgres directly — so rather than write policies to
+recreate the authorisation logic that already lives in the API, a migration
+enables RLS with no policies and revokes the Data API roles outright. Reads and
+writes go through the API or they do not happen.
+
 ## Stack
 
 | Layer     | Choice                                                            |
