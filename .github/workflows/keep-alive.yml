@@ -1,22 +1,27 @@
 name: Keep alive
 
-# Both free tiers idle out, and the failure modes are user-visible:
-#   - Render sleeps the API after ~15 minutes, costing the next visitor a
-#     ~30 second cold start.
-#   - Supabase pauses a project after ~1 week with no queries, after which the
-#     connection pooler reports "tenant/user not found" and the site is simply
-#     broken until someone resumes it from the dashboard.
+# Both free tiers idle out, but only one of the two failures actually matters:
 #
-# One request resets both timers.
+#   - Supabase pauses a project after ~1 week with no queries. The pooler then
+#     answers "tenant/user not found" and the site is broken until somebody
+#     resumes it from the dashboard. That is an outage, and it has happened.
+#   - Render sleeps the service after ~15 minutes, costing the next visitor a
+#     ~50 second cold start. Slow, but it recovers on its own.
 #
-# GitHub's scheduled runners are best-effort and can lag by tens of minutes
-# under load, so this reliably solves the weekly Supabase pause but only mostly
-# keeps Render warm. If cold starts matter — a link on a CV, say — pair this
-# with an external monitor such as UptimeRobot on a 5 minute interval.
+# The interval is deliberately days, not minutes. Render's free tier allows 750
+# instance-hours per month across the whole account, and a ping every ten
+# minutes never lets the service sleep — burning ~730 hours on one app and
+# leaving nothing for any other. Running every two days sits comfortably inside
+# Supabase's week while costing only a few hours a month, so the allowance stays
+# available for real visitors across every service on the account.
+#
+# The trade is deliberate: cold starts are accepted, silent database death is
+# not. If cold starts ever matter more than the hour budget, raise the frequency
+# knowing what it spends.
 
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '0 3 */2 * *' # 03:00 UTC, every second day
   workflow_dispatch: # so it can be triggered by hand after a pause
 
 jobs:
